@@ -10,7 +10,7 @@ setupSimpleEncrypt('password1234', function(error, apiObject){
   console.log(arguments)
   var start = new Date()
   require('async').waterfall([
-    apiObject.encrypt.bind(null, 'haay wuurl'),
+    apiObject.encrypt.bind(null, 'hello nsa'),
     apiObject.decrypt,
   ], function(error, result){
     console.log(arguments)
