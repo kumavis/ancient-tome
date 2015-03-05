@@ -1,0 +1,18 @@
+{
+  "name": "secure-storage",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^0.9.0",
+    "dnode": "^1.2.0",
+    "twin-bcrypt": "^2.1.0",
+    "webworkify": "^1.0.2",
+    "workerstream": "^1.2.1"
+  }
+}
