@@ -15,6 +15,7 @@ encrypted with the same parameters. For storage like a datastore where similar d
 may be written over and over again, we employ ciphers that are strong against these
 kind of attacks.
 
+Crypto flow:  salt + password --(bcrypt)--> hash --(AES-GCM)--> key pair
 
 ####### localStorage
 
@@ -26,33 +27,12 @@ as 'cryptographer-salt'.
 var SecureLocalStorage = require('cryptographer/storage/local')
 
 
-askUserForPassword(function(error, password){
-  console.log('got password!')
-  SecureLocalStorage(password, onCryptoReady)
+SecureLocalStorage(password, function(error, secureLocalStorage) {
+
+  secureLocalStorage.setItem('journal', 'dear diary...', function(){ ... })
+  secureLocalStorage.getItem('bank info', function(error, plaintext){ ... })
+
 })
-
-function onCryptoReady(error, secureLocalStorage) {
-  console.log('ready for crypto!')
-  var srcText = 'dear diary...'
-  secureLocalStorage.setItem('journal', srcText)
-}
-
-function askUserForPassword(cb) {
-  var password
-  while (!isValidPassword(password)) {
-    password = prompt('Enter your password:')
-  }
-  cb(null, password)
-}
-
-function isValidPassword(password) {
-  if (!password) return false
-  if ('string' !== typeof password) return false
-  if (password.length < 6) return false
-  // add other requirements here
-  return true
-}
-
 ```
 
 ####### Custom Storage
@@ -72,33 +52,9 @@ if (!salt) {
   localStorage.setItem('encryption-salt', salt)
 }
 
-askUserForPassword(function(error, password){
-  console.log('got password!')
-  StorageCrypto(password, salt, onCryptoReady)
-})
-
-function onCryptoReady(error, cryptographer) {
-  console.log('ready for crypto!')
-  var srcText = 'dear diary...'
-  cryptographer.encrypt(srcText, function(error, encryptedString){
+StorageCrypto(password, salt, function(error, cryptographer) {
+  cryptographer.encrypt('dear diary...', function(error, encryptedString){
     localStorage.setItem('journal', encryptedString)
   })
 }
-
-function askUserForPassword(cb) {
-  var password
-  while (!isValidPassword(password)) {
-    password = prompt('Enter your password:')
-  }
-  cb(null, password)
-}
-
-function isValidPassword(password) {
-  if (!password) return false
-  if ('string' !== typeof password) return false
-  if (password.length < 6) return false
-  // add other requirements here
-  return true
-}
-
 ```
