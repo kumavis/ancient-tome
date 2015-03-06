@@ -1,4 +1,5 @@
 var StorageCrypto = require('./index.js')
+var async = require('async')
 
 module.exports = secureLocalStorage
 
@@ -24,16 +25,24 @@ function secureLocalStorage(password, cb) {
 
     function setItem(key, value, cb) {
       cb = cb || noop
-      cryptographer.encrypt(value, function(error, encryptedString){
+      async.parallel([
+        cryptographer.hmac.bind(null, key),
+        cryptographer.encrypt.bind(null, value),
+      ], function(error, results){
         if (error) return cb(error)
-        localStorage.setItem(key, encryptedString)
-        cb(null, encryptedString)
+        var hashedKey = results[0]
+        var encryptedValue = results[1]
+        localStorage.setItem(hashedKey, encryptedValue)
+        cb(null)
       })
     }
 
     function getItem(key, cb) {
-      var encryptedString = localStorage.getItem(key)
-      cryptographer.decrypt(encryptedString, cb)
+      async.waterfall([
+        cryptographer.hmac.bind(null, key),
+        function(key, cb){ cb(null, localStorage.getItem(key)) },
+        cryptographer.decrypt,
+      ], cb)
     }
 
     function removeItem(key, cb) {

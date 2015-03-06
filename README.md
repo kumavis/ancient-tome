@@ -15,7 +15,7 @@ decrypt: `cypherText --(AES-GCM)--> plainText`
 
 If you want to use `localStorage` we provide a helper for you.
 It will manage the user's salt for you by storing it in localStorage
-as 'cryptographer-salt'.
+as 'cryptographer-salt'. Both keys and values are encrypted.
 
 ```js
 var SecureLocalStorage = require('cryptographer/storage/local')

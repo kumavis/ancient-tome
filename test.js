@@ -1,18 +1,17 @@
-var assert = require('assert')
-Cryptographer = require('./index.js')
+var SecureLocalStorage = require('./storage/local')
 
-var inputText = 'hello nsa'
+var password = 'password123'
+var inputText = 'dear diary...'
+localStorage.removeItem('journal')
 
-setupSimpleEncrypt('password1234', function(error, apiObject){
-  console.log('end')
-  console.log(arguments)
-  var start = new Date()
-  require('async').waterfall([
-    apiObject.encrypt.bind(null, inputText),
-    apiObject.decrypt,
-  ], function(error, result){
-    console.log(arguments)
-    console.log('round trip:', new Date() - start)
-    assert(inputText === result)
+SecureLocalStorage(password, function(error, secureLocalStorage) {
+
+  console.log('input:', inputText)
+  secureLocalStorage.setItem('journal', inputText, function(){
+    console.log('key leak?', !!localStorage.getItem('journal'))
+    secureLocalStorage.getItem('journal', function(error, plaintext){
+      console.log('match?', plaintext === inputText)
+    })
   })
+
 })

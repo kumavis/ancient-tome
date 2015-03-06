@@ -18,6 +18,7 @@ function setupWorker(){
     generateKeysFromSecret: generateKeysFromSecret,
     encrypt: encrypt,
     decrypt: decrypt,
+    hmac: hmac,
   })
   parentStream.pipe(rpc).pipe(parentStream)
 
@@ -31,23 +32,29 @@ function checkCompatability(cb) {
 }
 
 function generateKeysFromSecret(secret, salt, cb) {
-  async.waterfall([
-    generateHash.bind(null, secret, salt),
-    generateKey.bind(null),
-  ], function(error, keyPair){
+  generateBcryptHash(secret, salt, function(error, hash){
     if (error) return cb(error)
-    // store keyPair on keyChain (can't leave worker context)
-    var uuid = Uuid()
-    keyChain[uuid] = keyPair
-    cb(null, uuid)
+    async.parallel([
+      generateAesgcmKey.bind(null, hash),
+      generateHmacKey.bind(null, hash),
+    ], function(error, results){
+      if (error) return cb(error)
+      // store keys on keyChain (can't leave worker context)
+      var uuid = Uuid()
+      keyChain[uuid] = {
+        encryption: results[0],
+        hmac: results[1],
+      }
+      cb(null, uuid)
+    })
   })
 }
 
-function encrypt(srcText, keyPairId, cb) {
+function encrypt(srcText, keyId, cb) {
   var start = new Date()
   console.log('encrypt')
-  var keyPair = keyChain[keyPairId]
-  if (!keyPair) return cb(new Error('No keyPair for id "'+keyPairId+'".'))
+  if (!keyChain[keyId]) return cb(new Error('No key for id "'+keyId+'".'))
+  var key = keyChain[keyId].encryption
   // generate random meta data
   var keyDetails = {
     name: 'AES-GCM',
@@ -57,7 +64,7 @@ function encrypt(srcText, keyPairId, cb) {
   }
   // encrypt
   var inputArrayBuffer = str2ab(srcText)
-  var promise = subtle.encrypt(keyDetails, keyPair, inputArrayBuffer)
+  var promise = subtle.encrypt(keyDetails, key, inputArrayBuffer)
   unpromise(promise, function(error, encryptedBuffer){
     if (error) return cb(error)
     try {
@@ -74,11 +81,11 @@ function encrypt(srcText, keyPairId, cb) {
   })
 }
 
-function decrypt(srcText, keyPairId, cb) {
+function decrypt(srcText, keyId, cb) {
   var start = new Date()
   console.log('decrypt')
-  var keyPair = keyChain[keyPairId]
-  if (!keyPair) return cb(new Error('No keyPair for id "'+keyPairId+'".'))
+  if (!keyChain[keyId]) return cb(new Error('No keyPair for id "'+keyId+'".'))
+  var keyPair = keyChain[keyId].encryption
   try {
     // extract meta data
     var storeData = JSON.parse(srcText)
@@ -101,22 +108,56 @@ function decrypt(srcText, keyPairId, cb) {
   }
 }
 
-// util
-
-function generateHash(secret, salt, cb) {
+function hmac(srcText, keyId, cb) {
+  var start = new Date()
+  console.log('hmac')
   try {
-    TwinBcrypt.hash(secret, salt, function(hash){
-      cb(null, hash)
+    if (!keyChain[keyId]) return cb(new Error('No key for id "'+keyId+'".'))
+    var key = keyChain[keyId].hmac
+    // encrypt
+    var inputArrayBuffer = str2ab(srcText)
+    var promise = subtle.sign({ name: "HMAC" }, key, inputArrayBuffer)
+    unpromise(promise, function(error, signedBuffer){
+      if (error) return cb(error)
+      try {
+        var signedString = ab2str(signedBuffer)
+        console.log('hmac:', new Date() - start)
+        cb(null, signedString)
+      } catch (error) {
+        cb(error)
+      }
     })
   } catch (error) {
     cb(error)
   }
 }
 
-function generateKey(hash, cb) {
+// util
+
+function generateBcryptHash(secret, salt, cb) {
   try {
-    var seedBuffer = Buffer(hash).slice(0, 32)
+    TwinBcrypt.hash(secret, salt, function(hash){
+      cb(null, Buffer(hash))
+    })
+  } catch (error) {
+    cb(error)
+  }
+}
+
+function generateAesgcmKey(hash, cb) {
+  try {
+    var seedBuffer = hash.slice(0, 32)
     var promise = subtle.importKey('raw', seedBuffer, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt'])
+    unpromise(promise, cb)
+  } catch (error) {
+    cb(error)
+  }
+}
+
+function generateHmacKey(hash, cb) {
+try {
+    var seedBuffer = hash.slice(0, 32)
+    var promise = subtle.importKey('raw', seedBuffer, { name: 'HMAC', hash: {name: 'SHA-256'} }, false, ['sign'])
     unpromise(promise, cb)
   } catch (error) {
     cb(error)

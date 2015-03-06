@@ -31,23 +31,28 @@ StorageCrypto.generateSalt = function(iterations) {
 
 function prepareApiObject(secret, salt, cryptoWorker, cb) {
 
-  cryptoWorker.generateKeysFromSecret(secret, salt, function(error, keyPairId){
+  cryptoWorker.generateKeysFromSecret(secret, salt, function(error, keyId){
 
     if (error) return cb(error)
 
     var cryptographer = {
       encrypt: encrypt,
       decrypt: decrypt,
+      hmac: hmac,
     }
 
     cb(null, cryptographer)
 
     function encrypt(srcText, cb) {
-      cryptoWorker.encrypt(srcText, keyPairId, cb)
+      cryptoWorker.encrypt(srcText, keyId, cb)
     }
 
     function decrypt(srcText, cb) {
-      cryptoWorker.decrypt(srcText, keyPairId, cb)
+      cryptoWorker.decrypt(srcText, keyId, cb)
+    }
+
+    function hmac(srcText, cb) {
+      cryptoWorker.hmac(srcText, keyId, cb)
     }
 
   })
