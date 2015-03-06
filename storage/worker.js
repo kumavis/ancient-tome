@@ -51,15 +51,13 @@ function generateKeysFromSecret(secret, salt, cb) {
 }
 
 function encrypt(srcText, keyId, cb) {
-  var start = new Date()
-  console.log('encrypt')
   if (!keyChain[keyId]) return cb(new Error('No key for id "'+keyId+'".'))
   var key = keyChain[keyId].encryption
   // generate random meta data
   var keyDetails = {
     name: 'AES-GCM',
-    iv: randomTypedArray(16),
-    additionalData: randomTypedArray(256),
+    iv: randomByteArray(16),
+    additionalData: randomByteArray(256),
     tagLength: 128,
   }
   // encrypt
@@ -68,12 +66,11 @@ function encrypt(srcText, keyId, cb) {
   unpromise(promise, function(error, encryptedBuffer){
     if (error) return cb(error)
     try {
-      var encryptedString = ab2str(encryptedBuffer)
+      var encryptedString = byteArray2str(new Uint8Array(encryptedBuffer))
       var storeData = JSON.stringify({
-        keyDetails: keyDetails,
+        keyDetails: serializeKeyDetails(keyDetails),
         data: encryptedString,
       })
-      console.log('encrypt:', new Date() - start)
       cb(null, storeData)
     } catch (error) {
       cb(error)
@@ -82,25 +79,19 @@ function encrypt(srcText, keyId, cb) {
 }
 
 function decrypt(srcText, keyId, cb) {
-  var start = new Date()
-  console.log('decrypt')
-  if (!keyChain[keyId]) return cb(new Error('No keyPair for id "'+keyId+'".'))
-  var keyPair = keyChain[keyId].encryption
+  if (!keyChain[keyId]) return cb(new Error('No key for id "'+keyId+'".'))
+  var key = keyChain[keyId].encryption
   try {
     // extract meta data
     var storeData = JSON.parse(srcText)
-    var keyDetails = storeData.keyDetails
-    // normalize values (typed arrays dont deserialize correctly)
-    keyDetails.iv = normalizeTypedArray(keyDetails.iv)
-    keyDetails.additionalData = normalizeTypedArray(keyDetails.additionalData)
+    var keyDetails = deserializeKeyDetails(storeData.keyDetails)
     var encryptedString = storeData.data
     // decrypt
-    var inputArrayBuffer = str2ab(encryptedString)
-    var promise = subtle.decrypt(keyDetails, keyPair, inputArrayBuffer)
+    var inputArrayBuffer = str2byteArray(encryptedString).buffer
+    var promise = subtle.decrypt( keyDetails, key, inputArrayBuffer)
     unpromise(promise, function(error, decryptedBuffer){
       if (error) return cb(error)
       var decryptedString = ab2str(decryptedBuffer)
-      console.log('decrypt:', new Date() - start)
       cb(null, decryptedString)
     })
   } catch (error) {
@@ -109,8 +100,6 @@ function decrypt(srcText, keyId, cb) {
 }
 
 function hmac(srcText, keyId, cb) {
-  var start = new Date()
-  console.log('hmac')
   try {
     if (!keyChain[keyId]) return cb(new Error('No key for id "'+keyId+'".'))
     var key = keyChain[keyId].hmac
@@ -121,7 +110,6 @@ function hmac(srcText, keyId, cb) {
       if (error) return cb(error)
       try {
         var signedString = ab2str(signedBuffer)
-        console.log('hmac:', new Date() - start)
         cb(null, signedString)
       } catch (error) {
         cb(error)
@@ -164,27 +152,55 @@ try {
   }
 }
 
-function ab2str(buf) {
-  return String.fromCharCode.apply(null, new Uint16Array(buf));
-}
-
-function str2ab(str) {
-  var buf = new ArrayBuffer(str.length*2); // 2 bytes for each char
-  var bufView = new Uint16Array(buf);
-  for (var i=0, strLen=str.length; i < strLen; i++) {
-    bufView[i] = str.charCodeAt(i);
+function serializeKeyDetails(keyDetails){
+  return {
+    name: keyDetails.name,
+    tagLength: keyDetails.tagLength,
+    iv: byteArray2str(keyDetails.iv),
+    additionalData: byteArray2str(keyDetails.additionalData),
   }
-  return buf;
 }
 
-function randomTypedArray(size) {
+function deserializeKeyDetails(data){
+  return {
+    name: data.name,
+    tagLength: data.tagLength,
+    iv: str2byteArray(data.iv),
+    additionalData: str2byteArray(data.additionalData),
+  }
+}
+
+function randomByteArray(size) {
   return global.crypto.getRandomValues(new Uint8Array(size))
 }
 
-function normalizeTypedArray(arr) {
-  var len = Object.keys(arr).length
-  arr.length = len
-  return new Uint8Array(arr)
+function byteArray2str(byteArray) {
+  return Buffer._augment(byteArray).toString('base64')
+}
+
+function str2byteArray(str) {
+  return new Uint8Array(Buffer(str, 'base64').toArrayBuffer())
+}
+
+function ab2str(arrayBuffer) {
+  return Buffer(new Uint8Array(arrayBuffer)).toString('utf8')
+}
+
+function str2ab(str) {
+  return Buffer(str, 'utf8').toArrayBuffer()
+}
+
+function ab2Buffer(ab) {
+  var buffer = new Buffer(ab.byteLength);
+  var view = new Uint8Array(ab);
+  for (var i = 0; i < buffer.length; ++i) {
+      buffer[i] = view[i];
+  }
+  return buffer;
+}
+
+function randomByteArray(size) {
+  return global.crypto.getRandomValues(new Uint8Array(size))
 }
 
 function unpromise (p, cb) {

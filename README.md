@@ -7,15 +7,25 @@ A suite of simple tools for keeping secrets and respecting privacy.
 
 Crypto flow:
 
-init: `salt + password --(bcrypt)--> hash --(AES-GCM)--> key pair`
+init: `salt + password --(bcrypt)--> hash --(AES-GCM)--> key`
+
 encrypt: `plainText --(AES-GCM)--> cypherText`
+
 decrypt: `cypherText --(AES-GCM)--> plainText`
 
 ####### localStorage
 
 If you want to use `localStorage` we provide a helper for you.
 It will manage the user's salt for you by storing it in localStorage
-as 'cryptographer-salt'. Both keys and values are encrypted.
+as 'cryptographer-salt'. Values are encrypted and keys are obfuscated.
+
+Crypto flow:
+
+In addition to the flow above, we add these:
+
+init: `salt + password --(bcrypt)--> hash --(HMAC+SHA256)--> key`
+
+key: `plainText --(HMAC+SHA256)--> cypherText`
 
 ```js
 var SecureLocalStorage = require('cryptographer/storage/local')

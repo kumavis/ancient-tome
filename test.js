@@ -10,7 +10,8 @@ SecureLocalStorage(password, function(error, secureLocalStorage) {
   secureLocalStorage.setItem('journal', inputText, function(){
     console.log('key leak?', !!localStorage.getItem('journal'))
     secureLocalStorage.getItem('journal', function(error, plaintext){
-      console.log('match?', plaintext === inputText)
+      if (error) console.error(error)
+      console.log('match?', plaintext === inputText, plaintext, inputText)
     })
   })
 
