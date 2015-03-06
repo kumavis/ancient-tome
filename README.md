@@ -2,20 +2,14 @@
 
 A suite of simple tools for keeping secrets and respecting privacy.
 
-In this world there are many ways to keep important information from prying eyes.
-Each of these techiniques are specialized for different usecases, there is no real
-practical general solution. Instead of providing all the fundamentals and hoping
-you know how to put the correct pieces together, we will provide a couple solutions
-for common cases.
 
 #### For storage
 
-Certain ciphers are weak against analysis attacks when comparing similar source text
-encrypted with the same parameters. For storage like a datastore where similar data
-may be written over and over again, we employ ciphers that are strong against these
-kind of attacks.
+Crypto flow:
 
-Crypto flow:  salt + password --(bcrypt)--> hash --(AES-GCM)--> key pair
+init: `salt + password --(bcrypt)--> hash --(AES-GCM)--> key pair`
+encrypt: `plainText --(AES-GCM)--> cypherText`
+decrypt: `cypherText --(AES-GCM)--> plainText`
 
 ####### localStorage
 
