@@ -3,7 +3,7 @@
 A suite of simple tools for keeping secrets and respecting privacy.
 
 
-#### For storage
+### For storage
 
 Crypto flow:
 
@@ -13,7 +13,7 @@ encrypt: `plainText --(AES-GCM)--> cypherText`
 
 decrypt: `cypherText --(AES-GCM)--> plainText`
 
-####### localStorage
+##### localStorage
 
 If you want to use `localStorage` we provide a helper for you.
 It will manage the user's salt for you by storing it in localStorage
@@ -39,7 +39,7 @@ SecureLocalStorage(password, function(error, secureLocalStorage) {
 })
 ```
 
-####### Custom Storage
+##### Custom Storage
 
 You can use whatever key-value storage mechanism you want.
 If you choose this route, you must manage the salt yourself.
