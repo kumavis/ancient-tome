@@ -1,5 +1,5 @@
-// var easyEncrypt = require('easy-encrypt')
-var easyEncrypt = require('./index.js')
+// var StorageCrypto = require('cryptographer/storage')
+var StorageCrypto = require('./storage')
 
 /*
     The user needs to remember their password,
@@ -17,17 +17,31 @@ var easyEncrypt = require('./index.js')
 
 var salt = localStorage.getItem('encryption-salt')
 if (!salt) {
-  salt = easyEncrypt.generateSalt()
+  salt = StorageCrypto.generateSalt()
   localStorage.setItem('encryption-salt', salt)
 }
 
-;(function(){
+askUserForPassword(function(error, password){
+  console.log('got password!')
+  StorageCrypto(password, salt, onCryptoReady)
+})
+
+function onCryptoReady(error, cryptographer) {
+  console.log('ready for crypto!')
+  var srcText = 'dear diary...'
+  cryptographer.encrypt(srcText, function(error, encryptedString){
+    localStorage.setItem('journal', encryptedString)
+  })
+}
+
+function askUserForPassword(cb) {
   var password
-  while (!isValidPassword(password)) {
-    password = prompt('Enter your password:')
-  }
-  var cryptographer = easyEncrypt.init(password, salt)
-})()
+  // while (!isValidPassword(password)) {
+  //   password = prompt('Enter your password:')
+  // }
+  password = '1234'
+  cb(null, password)
+}
 
 function isValidPassword(password) {
   if (!password) return false
@@ -36,7 +50,3 @@ function isValidPassword(password) {
   // add other requirements here
   return true
 }
-
-cryptographer.encrypt('hello nsa', function(err, encryptedString){
-  localStorage.setItem('my secret', encryptedString)
-})

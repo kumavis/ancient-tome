@@ -11,6 +11,7 @@
   "dependencies": {
     "async": "^0.9.0",
     "dnode": "^1.2.0",
+    "hat": "0.0.3",
     "twin-bcrypt": "^2.1.0",
     "webworkify": "^1.0.2",
     "workerstream": "^1.2.1"

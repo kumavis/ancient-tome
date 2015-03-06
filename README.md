@@ -16,7 +16,7 @@ may be written over and over again, we employ ciphers that are strong against th
 kind of attacks.
 
 ```js
-var Cryptographer = require('cryptographer')
+var StorageCrypto = require('cryptographer/storage')
 
 /*
     The user needs to remember their password,
@@ -34,19 +34,30 @@ var Cryptographer = require('cryptographer')
 
 var salt = localStorage.getItem('encryption-salt')
 if (!salt) {
-  salt = Cryptographer.generateSalt()
+  salt = StorageCrypto.generateSalt()
   localStorage.setItem('encryption-salt', salt)
 }
 
-var cryptographer
+askUserForPassword(function(error, password){
+  console.log('got password!')
+  StorageCrypto(password, salt, onCryptoReady)
+})
 
-;(function(){
+function onCryptoReady(error, cryptographer) {
+  console.log('ready for crypto!')
+  var srcText = 'dear diary...'
+  cryptographer.encrypt(srcText, function(error, encryptedString){
+    localStorage.setItem('journal', encryptedString)
+  })
+}
+
+function askUserForPassword(cb) {
   var password
   while (!isValidPassword(password)) {
     password = prompt('Enter your password:')
   }
-  cryptographer = Cryptographer.init(password, salt)
-})()
+  cb(null, password)
+}
 
 function isValidPassword(password) {
   if (!password) return false
@@ -56,7 +67,4 @@ function isValidPassword(password) {
   return true
 }
 
-cryptographer.encrypt('dear diary...', function(err, encryptedString){
-  localStorage.setItem('journal', encryptedString)
-})
 ```
