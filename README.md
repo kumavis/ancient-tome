@@ -46,10 +46,12 @@ myTome._remove = function(key, cb){ ... }
 
 These are the cryptograph flows used by AncientTome:
 
-init: `salt + password --(bcrypt)--> hash --(AES-GCM)--> AES key`
-init: `salt + password --(bcrypt)--> hash --(HMAC+SHA256)--> HMAC key`
-obfuscate keys: `plainText --(HMAC+SHA256)--> cypherText`
-encrypt values: `plainText --(AES-GCM)--> cypherText`
+```
+init: salt + password --(bcrypt)--> hash --(AES-GCM)--> AES key
+init: salt + password --(bcrypt)--> hash --(HMAC+SHA256)--> HMAC key
+obfuscate keys: plainText --(HMAC+SHA256)--> cypherText
+encrypt values: plainText --(AES-GCM)--> cypherText
+```
 
 The salt is randomly generated on first use and stored in plaintext.
 The password is provided by the user and stored in their head.
