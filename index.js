@@ -58,8 +58,14 @@ proto.get = function(key, cb) {
   async.waterfall([
     _this._crypto.hmac.bind(null, key),
     _this._get.bind(_this),
-    _this._crypto.decrypt,
-  ], cb)
+  ], function(err, encryptedText){
+    if (err) return cb(err)
+    if (encryptedText) {
+      _this._crypto.decrypt(encryptedText, cb)
+    } else {
+      cb()
+    }
+  })
 
 }
 
@@ -67,6 +73,14 @@ proto.set = function(key, value, cb) {
   var _this = this
   if (!_this._crypto) return cb ? cb(notInitialized()) : notInitialized()
   cb = cb || noop
+
+  if (typeof value !== 'string' ) {
+    if (value.toString) {
+      value = value.toString()
+    } else {
+      value = JSON.parse(value)
+    }
+  }
 
   async.parallel([
     _this._crypto.hmac.bind(null, key),
@@ -86,7 +100,7 @@ proto.remove = function(key, cb) {
 
   async.waterfall([
     _this._crypto.hmac.bind(null, key),
-    _this._remove.bind(_this, key),
+    _this._remove.bind(_this),
   ], cb)
 }
 

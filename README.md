@@ -3,6 +3,21 @@
 A simple tool for storing secrets.
 
 
+### Crypto flow:
+
+These are the cryptograph flows used by AncientTome:
+
+```
+init: salt + password --(bcrypt)--> hash --(AES-GCM)--> AES key
+init: salt + password --(bcrypt)--> hash --(HMAC+SHA256)--> HMAC key
+obfuscate keys: plainText --(HMAC+SHA256)--> cypherText
+encrypt values: plainText --(AES-GCM)--> cypherText
+```
+
+The salt is randomly generated on first use and stored in plaintext.
+The password is provided by the user and stored in their head.
+
+
 ### Usage:
 
 ##### localStorage
@@ -42,16 +57,20 @@ myTome._set = function(key, value, cb){ ... }
 myTome._remove = function(key, cb){ ... }
 ```
 
-### Crypto flow:
+### Extras:
 
-These are the cryptograph flows used by AncientTome:
+With obfuscated keys, its hard to keep track of what's been stored.
+Use the `TomeIndexer` to augment a tome with a simple index.
+Be sure to do this after if you are overriding get/set methods.
 
+```js
+var AncientTome = require('ancient-tome')
+var TomeIndexer = require('ancient-tome/indexer')
+
+var myTome = AncientTome()
+TomeIndexer(myTome)
+
+myTome.open(password, function(){
+  myTome.index() //=> ['journal', 'bank info']
+})
 ```
-init: salt + password --(bcrypt)--> hash --(AES-GCM)--> AES key
-init: salt + password --(bcrypt)--> hash --(HMAC+SHA256)--> HMAC key
-obfuscate keys: plainText --(HMAC+SHA256)--> cypherText
-encrypt values: plainText --(AES-GCM)--> cypherText
-```
-
-The salt is randomly generated on first use and stored in plaintext.
-The password is provided by the user and stored in their head.

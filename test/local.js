@@ -7,6 +7,7 @@ localStorage.removeItem('journal')
 
 test('localStorage', function (t) {
   t.plan(5)
+  clearLocalStorage()
 
   var localAncient = LocalAncient()
   localAncient.open(password, function(error) {
@@ -28,3 +29,10 @@ test('localStorage', function (t) {
 
   })
 })
+
+
+function clearLocalStorage() {
+  for (var key in localStorage) {
+    localStorage.removeItem(key)
+  }
+}
