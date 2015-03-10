@@ -1,10 +1,11 @@
 var WebWorkify = require('webworkify')
 var WorkerStream = require('workerstream')
-var workerDefinition = require('./worker.js')
 var dnode = require('dnode')
 var TwinBcrypt = require('twin-bcrypt')
+var workerDefinition = require('./worker.js')
 
 module.exports = StorageCrypto
+
 
 function StorageCrypto(secret, salt, cb) {
 

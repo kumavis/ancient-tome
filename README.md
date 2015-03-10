@@ -1,64 +1,55 @@
-# Cryptographer
+# Ancient Tome
 
-A suite of simple tools for keeping secrets and respecting privacy.
+A simple tool for storing secrets.
 
 
-### For storage
+### Usage:
 
-Crypto flow:
+##### localStorage
 
-init: `salt + password --(bcrypt)--> hash --(AES-GCM)--> key`
-
-encrypt: `plainText --(AES-GCM)--> cypherText`
-
-decrypt: `cypherText --(AES-GCM)--> plainText`
-
-#### localStorage
-
-If you want to use `localStorage` we provide a helper for you.
-It will manage the user's salt for you by storing it in localStorage
-as 'cryptographer-salt'. Values are encrypted and keys are obfuscated.
-
-Crypto flow:
-
-In addition to the flow above, we add these:
-
-init: `salt + password --(bcrypt)--> hash --(HMAC+SHA256)--> key`
-
-key: `plainText --(HMAC+SHA256)--> cypherText`
+If you want to use `localStorage` a wrapper is provided for you.
+While `localStorage` is synchronous, encryption is asynchronous,
+so read methods require a callback.
+Write methods have an optional callback called on completion.
 
 ```js
-var SecureLocalStorage = require('cryptographer/storage/local')
+var AncientLocal = require('ancient-tome/local')
 
+var secureLocalStorage = AncientLocal()
 
-SecureLocalStorage(password, function(error, secureLocalStorage) {
+secureLocalStorage.open(password, function(error) {
 
-  secureLocalStorage.setItem('journal', 'dear diary...', function(){ ... })
-  secureLocalStorage.getItem('bank info', function(error, plaintext){ ... })
+  secureLocalStorage.setItem('journal', 'dear diary...', function(err){ ... })
+  secureLocalStorage.getItem('bank info', function(err, plaintext){ ... })
 
 })
 ```
 
-#### Custom Storage
+##### Custom Storage
 
 You can use whatever key-value storage mechanism you want.
-If you choose this route, you must manage the salt yourself.
-Don't worry, this is easy.
+Reading non-existant keys should return a falsy value, not error.
+The first argument of callbacks should be the error or a falsy value.
 Here is a custom storage example:
 
 ```js
-var StorageCrypto = require('cryptographer/storage')
+var AncientTome = require('ancient-tome')
 
+var myTome = AncientTome()
 
-var salt = localStorage.getItem('encryption-salt')
-if (!salt) {
-  salt = StorageCrypto.generateSalt()
-  localStorage.setItem('encryption-salt', salt)
-}
-
-StorageCrypto(password, salt, function(error, cryptographer) {
-  cryptographer.encrypt('dear diary...', function(error, encryptedString){
-    localStorage.setItem('journal', encryptedString)
-  })
-}
+myTome._get = function(key, cb){ ... }
+myTome._set = function(key, value, cb){ ... }
+myTome._remove = function(key, cb){ ... }
 ```
+
+### Crypto flow:
+
+These are the cryptograph flows used by AncientTome:
+
+init: `salt + password --(bcrypt)--> hash --(AES-GCM)--> AES key`
+init: `salt + password --(bcrypt)--> hash --(HMAC+SHA256)--> HMAC key`
+obfuscate keys: `plainText --(HMAC+SHA256)--> cypherText`
+encrypt values: `plainText --(AES-GCM)--> cypherText`
+
+The salt is randomly generated on first use and stored in plaintext.
+The password is provided by the user and stored in their head.

@@ -1,5 +1,5 @@
 {
-  "name": "cryptographer",
+  "name": "ancient-tome",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -15,5 +15,8 @@
     "twin-bcrypt": "^2.1.0",
     "webworkify": "^1.0.2",
     "workerstream": "^1.2.1"
+  },
+  "devDependencies": {
+    "tape": "^3.5.0"
   }
 }
