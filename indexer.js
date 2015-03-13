@@ -30,7 +30,8 @@ function TomeIndexer(tome) {
       _get.bind(tome, ancientTomeIndexKey),
     ], function(err, results){
       if (err) return cb(err)
-      indexOfKeys = results[1] || []
+      var storedIndex = results[1]
+      indexOfKeys = storedIndex ? JSON.parse(storedIndex) : []
       cb()
     })
   }
@@ -41,7 +42,7 @@ function TomeIndexer(tome) {
     indexOfKeys.push(key)
     async.parallel([
       _set.bind(tome, key, value),
-      _set.bind(tome, ancientTomeIndexKey, indexOfKeys),
+      updateIndex,
     ], function(err, results){
       cb(err, results[0])
     })
@@ -53,7 +54,7 @@ function TomeIndexer(tome) {
     removeFromArray(key, indexOfKeys)
     async.parallel([
       _remove.bind(tome, key),
-      _set.bind(tome, ancientTomeIndexKey, indexOfKeys),
+      updateIndex,
     ], function(err, results){
       cb(err, results[0])
     })
@@ -62,6 +63,10 @@ function TomeIndexer(tome) {
   // return a copy of the indexed keys
   function index() {
     return indexOfKeys.slice()
+  }
+
+  function updateIndex(cb) {
+    _set.call(tome, ancientTomeIndexKey, JSON.stringify(indexOfKeys), cb)
   }
 
 }
