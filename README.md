@@ -2,6 +2,10 @@
 
 A simple tool for storing secrets.
 
+### warning
+
+This is under development and has not been audited yet.
+Currently uses the WebCrypto API, so it only works in modern browsers.
 
 ### Crypto flow:
 
