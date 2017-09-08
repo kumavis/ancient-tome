@@ -1,5 +1,7 @@
 # Ancient Tome
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/kumavis/ancient-tome.svg)](https://greenkeeper.io/)
+
 A simple tool for storing secrets.
 
 ### warning
